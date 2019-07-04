@@ -1,0 +1,63 @@
+.zoom-img_wrap {
+    position: relative;
+    overflow: hidden;
+    width: 400px;
+    height: 400px;
+}
+
+.zoom-img_wrap img {
+    position: absolute;
+    width: auto;
+    height: auto;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    max-width: 100%;
+    max-height: 100%;
+    margin: auto;
+    cursor: grab;
+}
+
+.zoom-img_wrap img:active {
+    cursor: grabbing;
+}
+
+.btn-zoom-in,
+.btn-zoom-out {
+    position: absolute;
+    display: inline-block;
+    width: 38px;
+    height: 38px;
+    bottom: 0;
+    border: 0;
+    border-radius: 0;
+    background-color: grey;
+    cursor: pointer;
+}
+
+.btn-zoom-in::before,
+.btn-zoom-in::after,
+.btn-zoom-out::before,
+.btn-zoom-out::after {
+     content: '';
+     position: absolute;
+     top: 18px;
+     left: 12px;
+     display: block;
+     width: 14px;
+     height: 1px;
+     border-bottom: 2px solid white;
+ }
+
+.btn-zoom-out {
+    right: 38px;
+}
+
+.btn-zoom-in {
+    right: 0;
+}
+
+.btn-zoom-in::after {
+    transform: rotate(90deg);
+}
