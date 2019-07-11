@@ -1,17 +1,19 @@
 export default class Zoom {
   constructor({
-                selector = '.zoom-image',
-                zoomInBtn = null,
-                zoomOutBtn = null,
-                zoomStep = 0.12,
-                zoomCurrent = 1,
-              }) {
+    selector = '.zoom-image',
+    zoomInBtn = null,
+    zoomOutBtn = null,
+    zoomStep = 0.12,
+    zoomCurrent = 1,
+    zoomMin = 0.1,
+  }) {
     this.selector = typeof selector === 'string' ? document.querySelector(selector) : selector;
     this.image = this.selector.querySelector('img');
     this.zoomInBtn = typeof zoomInBtn === 'string' ? document.querySelector(zoomInBtn) : zoomInBtn;
     this.zoomOutBtn = typeof zoomOutBtn === 'string' ? document.querySelector(zoomOutBtn) : zoomOutBtn;
     this.zoomStep = zoomStep;
     this.zoomCurrent = zoomCurrent;
+    this.zoomMin = zoomMin;
     this.imageW = this.image.offsetWidth;
     this.imageH = this.image.offsetHeight;
 
@@ -46,13 +48,13 @@ export default class Zoom {
   zoomInOut(condition) {
     if (condition) {
       this.zoomCurrent += this.zoomStep;
-    } else {
+    } else if (this.zoomCurrent - this.zoomStep > this.zoomMin) {
       this.zoomCurrent -= this.zoomStep;
     }
-    this.image.style.maxWidth = 'none';
-    this.image.style.maxHeight = 'none';
     this.image.style.width = `${this.imageW * this.zoomCurrent}px`;
     this.image.style.height = `${this.imageH * this.zoomCurrent}px`;
+    this.image.style.maxWidth = 'none';
+    this.image.style.maxHeight = 'none';
   }
 
   handleMouseDown(event) {
