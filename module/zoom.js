@@ -1,25 +1,25 @@
 export default class Zoom {
   constructor({
-    selector = '.zoom-image',
-    zoomInBtn = null,
-    zoomOutBtn = null,
-    scaleStep = 0.12,
-    targetScale = 1,
-    zoomMin = 0.1,
-  }) {
+      selector = '.zoom-image',
+      zoomInBtn = null,
+      zoomOutBtn = null,
+      zoomStep = 0.12,
+      targetScale = 1,
+      zoomMin = 0.12,
+    }) {
     this.selector = typeof selector === 'string' ? document.querySelector(selector) : selector;
     this.image = this.selector.querySelector('img');
     this.zoomInBtn = typeof zoomInBtn === 'string' ? document.querySelector(zoomInBtn) : zoomInBtn;
     this.zoomOutBtn = typeof zoomOutBtn === 'string' ? document.querySelector(zoomOutBtn) : zoomOutBtn;
-    this.scaleStep = scaleStep;
+    this.zoomStep = zoomStep;
     this.targetScale = targetScale;
-    this.targetOffsetX = 0;
-    this.targetOffsetY = 0;
     this.zoomMin = zoomMin;
     this.imageW = this.image.clientWidth;
     this.imageH = this.image.clientHeight;
     this.selectorW = this.selector.clientWidth;
     this.selectorH = this.selector.clientHeight;
+    this.targetOffsetX = 0;
+    this.targetOffsetY = 0;
 
     this.init();
   }
@@ -28,7 +28,8 @@ export default class Zoom {
     if (this.selector === null) return;
     this.createBtn();
     this.centerElement();
-    this.image.addEventListener('mousedown', ev => this.handleMouseDown(ev));
+    this.image.addEventListener('mousedown', ev => this.handleStart(ev));
+    this.image.addEventListener('touchstart', ev => this.handleStart(ev));
     this.image.addEventListener('dblclick', () => this.zoomInOut(true));
     this.image.ondragstart = () => false;
   }
@@ -58,71 +59,88 @@ export default class Zoom {
 
   zoomInOut(condition) {
     if (condition) {
-      this.targetScale += this.scaleStep;
-    } else if (this.targetScale - this.scaleStep > this.zoomMin) {
-      this.targetScale -= this.scaleStep;
+      this.targetScale += this.zoomStep;
+    } else if (this.targetScale > this.zoomMin) {
+      this.targetScale -= this.zoomStep;
     }
     this.moveElementTo();
   }
 
-  handleMouseDown(event) {
+  handleStart(event) {
     const {
-      offsetX,
-      offsetY,
-    } = event;
+      clientX: startClientX,
+      clientY: startClientY,
+    } = event.targetTouches ? event.targetTouches[0] : event;
     const {
       left,
       right,
       top,
       bottom,
     } = this.selector.getBoundingClientRect();
-    const { pageYOffset } = window;
-    const offsetScaledX = offsetX * this.targetScale;
-    const offsetScaledY = offsetY * this.targetScale;
-    const imageHalfScaledW = (this.imageW * this.targetScale) / 2;
-    const imageHalfScaledH = (this.imageH * this.targetScale) / 2;
     let imageX;
     let imageY;
 
+    const disableScroll = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+    };
+
     // centers the this.image at (pageX, pageY) coordinates
     const imageMove = (ev) => {
-      const { pageX, pageY } = ev;
-      imageX = pageX - left - offsetX;
-      imageY = pageY - top - pageYOffset - offsetY;
+      const {
+        clientX,
+        clientY,
+      } = ev.targetTouches ? ev.targetTouches[0] : ev;
 
-      // Fix pointer position on image if scaled
-      if (this.targetScale !== 1) {
-        imageX -= offsetScaledX - imageHalfScaledW - (offsetX - (this.imageW / 2));
-        imageY -= offsetScaledY - imageHalfScaledH - (offsetY - (this.imageH / 2));
-      }
-
-      // Prevent wrong position of image
-      this.image.style.right = 'auto';
-      this.image.style.bottom = 'auto';
+      // Calculate image position inside wrapper
+      imageX = this.targetOffsetX + parseInt(clientX, 10) - parseInt(startClientX, 10);
+      imageY = this.targetOffsetY + parseInt(clientY, 10) - parseInt(startClientY, 10);
 
       // Check border position of image wrapper
-      if (pageX >= left && pageX <= right && pageY - pageYOffset >= top && pageY - pageYOffset <= bottom) {
-        this.targetOffsetX = imageX;
-        this.targetOffsetY = imageY;
-        this.moveElementTo();
+      if (clientX > left && clientX < right && clientY > top && clientY < bottom) {
+        this.moveElementTo(imageX, imageY);
       } else {
+        document.removeEventListener('touchmove', imageMove);
         document.removeEventListener('mousemove', imageMove);
+        window.removeEventListener('touchmove', disableScroll, { passive: false });
+        this.updateCoordinates(imageX, imageY);
       }
     };
 
     // move the this.image on mousemove
+    document.addEventListener('touchmove', imageMove);
     document.addEventListener('mousemove', imageMove);
+    window.addEventListener('touchmove', disableScroll, { passive: false });
 
-    // drop the this.image, remove unneeded handlers
+    this.image.addEventListener('touchend', () => {
+      document.removeEventListener('touchmove', imageMove);
+      window.removeEventListener('touchmove', disableScroll, { passive: false });
+      this.updateCoordinates(imageX, imageY);
+      this.image.ontouchend = null;
+    });
+
     this.image.addEventListener('mouseup', () => {
       document.removeEventListener('mousemove', imageMove);
+      this.updateCoordinates(imageX, imageY);
       this.image.onmouseup = null;
     });
   }
 
-  moveElementTo() {
+  updateCoordinates(
+    offsetX,
+    offsetY,
+  ) {
+    this.targetOffsetX = offsetX;
+    this.targetOffsetY = offsetY;
+  }
+
+  moveElementTo(
+    offsetX = this.targetOffsetX,
+    offsetY = this.targetOffsetY,
+    scale = this.targetScale,
+  ) {
     this.image.style.cssText = `transform : 
-    translate3d(${this.targetOffsetX}px, ${this.targetOffsetY}px, 0) 
-    scale3d(${this.targetScale}, ${this.targetScale}, 1);`;
+    translate3d(${offsetX}px, ${offsetY}px, 0) 
+    scale3d(${scale}, ${scale}, 1);`;
   }
 }
