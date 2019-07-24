@@ -77,6 +77,10 @@ export default class Zoom {
       bottom,
     } = this.selector.getBoundingClientRect();
     const { pageYOffset } = window;
+    const offsetScaledX = offsetX * this.targetScale;
+    const offsetScaledY = offsetY * this.targetScale;
+    const imageHalfScaledW = (this.imageW * this.targetScale) / 2;
+    const imageHalfScaledH = (this.imageH * this.targetScale) / 2;
     let imageX;
     let imageY;
 
@@ -88,8 +92,8 @@ export default class Zoom {
 
       // Fix pointer position on image if scaled
       if (this.targetScale !== 1) {
-        imageX -= (offsetX * this.targetScale - ((this.imageW * this.targetScale) / 2)) - (offsetX - (this.imageW / 2));
-        imageY -= (offsetY * this.targetScale - ((this.imageH * this.targetScale) / 2)) - (offsetY - (this.imageH / 2));
+        imageX -= offsetScaledX - imageHalfScaledW - (offsetX - (this.imageW / 2));
+        imageY -= offsetScaledY - imageHalfScaledH - (offsetY - (this.imageH / 2));
       }
 
       // Prevent wrong position of image
@@ -117,19 +121,7 @@ export default class Zoom {
   }
 
   moveElementTo() {
-    this.image.style.cssText = `-moz-transform : 
-    translate( ${this.targetOffsetX}px, ${this.targetOffsetY}px) 
-    scale(${this.targetScale}); 
-    -ms-transform : 
-    translate(${this.targetOffsetX}px, ${this.targetOffsetY}px) 
-    scale(${this.targetScale}); 
-    -o-transform : 
-    translate(${this.targetOffsetX}px, ${this.targetOffsetY}px) 
-    scale(${this.targetScale}); 
-    -webkit-transform : 
-    translate(${this.targetOffsetX}px, ${this.targetOffsetY}px) 
-    scale(${this.targetScale}); 
-    transform : 
+    this.image.style.cssText = `transform : 
     translate3d(${this.targetOffsetX}px, ${this.targetOffsetY}px, 0) 
     scale3d(${this.targetScale}, ${this.targetScale}, 1);`;
   }
