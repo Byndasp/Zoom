@@ -1,8 +1,8 @@
 .zoom-img_wrap {
     position: relative;
     overflow: hidden;
-    width: 400px;
-    height: 400px;
+    width: 600px;
+    height: 600px;
 }
 
 .zoom-img_wrap img {
@@ -39,15 +39,15 @@
 .btn-zoom-in::after,
 .btn-zoom-out::before,
 .btn-zoom-out::after {
-     content: '';
-     position: absolute;
-     top: 18px;
-     left: 12px;
-     display: block;
-     width: 14px;
-     height: 1px;
-     border-bottom: 2px solid white;
- }
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 12px;
+    display: block;
+    width: 14px;
+    height: 1px;
+    border-bottom: 2px solid white;
+}
 
 .btn-zoom-out {
     right: 38px;

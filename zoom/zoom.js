@@ -1,47 +1,63 @@
 export default class Zoom {
   constructor({
-      selector = '.zoom-image',
-      zoomInBtn = null,
-      zoomOutBtn = null,
-      scaleStep = 0.12,
-      scaleTarget = 1,
-      scaleMin = 0.12,
-      btnControl = false,
-      wheelControl = true,
-    }) {
-    this.selector = typeof selector === 'string' ? document.querySelector(selector) : selector;
-    this.image = this.selector.querySelector('img');
+    container = '.zoom-image',
+    zoomInBtn = null,
+    zoomOutBtn = null,
+    scaleStep = 0.12,
+    scaleCurrent = 1,
+    scaleMin = 0.12,
+    btnControl = false,
+    wheelControl = true,
+    doubleClickControl = true,
+  }) {
+    this.container = typeof container === 'string' ? document.querySelector(container) : container;
+    this.image = this.container.querySelector('img');
     this.zoomInBtn = typeof zoomInBtn === 'string' ? document.querySelector(zoomInBtn) : zoomInBtn;
     this.zoomOutBtn = typeof zoomOutBtn === 'string' ? document.querySelector(zoomOutBtn) : zoomOutBtn;
     this.scaleStep = scaleStep;
-    this.scaleTarget = scaleTarget;
+    this.scaleCurrent = scaleCurrent;
     this.scaleMin = scaleMin;
     this.imageW = this.image.clientWidth;
     this.imageH = this.image.clientHeight;
-    this.selectorW = this.selector.clientWidth;
-    this.selectorH = this.selector.clientHeight;
+    this.containerW = this.container.clientWidth;
+    this.containerH = this.container.clientHeight;
     this.targetOffsetX = 0;
     this.targetOffsetY = 0;
     this.btnControl = btnControl;
     this.wheelControl = wheelControl;
+    this.doubleClickControl = doubleClickControl;
 
     this.init();
   }
 
   init() {
-    if (this.selector === null) return;
+    if (this.container === null) return;
     if (this.btnControl) this.createBtn();
-    if (this.wheelControl) this.selector.addEventListener('wheel', ev => this.handleWheel(ev));
+
+    this.initEvents();
     this.centerElement();
-    this.image.addEventListener('mousedown', ev => this.handleStart(ev));
-    this.image.addEventListener('touchstart', ev => this.handleStart(ev));
-    this.image.addEventListener('dblclick', () => this.zoomInOut(true));
     this.image.ondragstart = () => false;
   }
 
+  initEvents() {
+    if (this.wheelControl) {
+      this.container.addEventListener('wheel', ev => this.handleWheel(ev));
+      this.container.addEventListener('mouseover', () => {
+        window.addEventListener('wheel', this.constructor.disableScroll, { passive: false });
+      });
+      this.container.addEventListener('mouseout', () => {
+        window.removeEventListener('wheel', this.constructor.disableScroll, { passive: true });
+      });
+    }
+    if (this.doubleClickControl) this.image.addEventListener('dblclick', () => this.zoomInOut(true));
+    this.image.addEventListener('mousedown', ev => this.handleStart(ev));
+    this.image.addEventListener('touchstart', ev => this.handleStart(ev));
+  }
+
   centerElement() {
-    this.targetOffsetX = (this.selectorW - this.imageW) / 2;
-    this.targetOffsetY = (this.selectorH - this.imageH) / 2;
+    this.targetOffsetX = (this.containerW - this.imageW) / 2;
+    this.targetOffsetY = (this.containerH - this.imageH) / 2;
+
     this.moveElementTo();
   }
 
@@ -49,13 +65,13 @@ export default class Zoom {
     if (this.zoomOutBtn === null) {
       this.zoomOutBtn = document.createElement('span');
       this.zoomOutBtn.classList.add('btn-zoom-out');
-      this.selector.appendChild(this.zoomOutBtn);
+      this.container.appendChild(this.zoomOutBtn);
     }
 
     if (this.zoomInBtn === null) {
       this.zoomInBtn = document.createElement('span');
       this.zoomInBtn.classList.add('btn-zoom-in');
-      this.selector.appendChild(this.zoomInBtn);
+      this.container.appendChild(this.zoomInBtn);
     }
 
     this.zoomInBtn.addEventListener('click', () => this.zoomInOut(true));
@@ -64,9 +80,9 @@ export default class Zoom {
 
   zoomInOut(condition) {
     if (condition) {
-      this.scaleTarget += this.scaleStep;
-    } else if (this.scaleTarget > this.scaleMin) {
-      this.scaleTarget -= this.scaleStep;
+      this.scaleCurrent += this.scaleStep;
+    } else if (this.scaleCurrent > this.scaleMin) {
+      this.scaleCurrent -= this.scaleStep;
     }
     this.moveElementTo();
   }
@@ -85,14 +101,11 @@ export default class Zoom {
       right,
       top,
       bottom,
-    } = this.selector.getBoundingClientRect();
-    let imageX;
-    let imageY;
-
-    const disableScroll = (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-    };
+    } = this.container.getBoundingClientRect();
+    let {
+      targetOffsetX: imageX,
+      targetOffsetY: imageY,
+    } = this;
 
     // centers the this.image at (pageX, pageY) coordinates
     const imageMove = (ev) => {
@@ -111,7 +124,7 @@ export default class Zoom {
       } else {
         document.removeEventListener('touchmove', imageMove);
         document.removeEventListener('mousemove', imageMove);
-        window.removeEventListener('touchmove', disableScroll, { passive: false });
+        window.removeEventListener('touchmove', this.constructor.disableScroll, { passive: true });
         this.updateCoordinates(imageX, imageY);
       }
     };
@@ -119,11 +132,11 @@ export default class Zoom {
     // move the this.image on mousemove
     document.addEventListener('touchmove', imageMove);
     document.addEventListener('mousemove', imageMove);
-    window.addEventListener('touchmove', disableScroll, { passive: false });
+    window.addEventListener('touchmove', this.constructor.disableScroll, { passive: false });
 
     this.image.addEventListener('touchend', () => {
       document.removeEventListener('touchmove', imageMove);
-      window.removeEventListener('touchmove', disableScroll, { passive: false });
+      window.removeEventListener('touchmove', this.constructor.disableScroll, { passive: true });
       this.updateCoordinates(imageX, imageY);
       this.image.ontouchend = null;
     });
@@ -146,10 +159,15 @@ export default class Zoom {
   moveElementTo(
     offsetX = this.targetOffsetX,
     offsetY = this.targetOffsetY,
-    scale = this.scaleTarget,
+    scale = this.scaleCurrent,
   ) {
     this.image.style.cssText = `transform : 
     translate3d(${offsetX}px, ${offsetY}px, 0) 
     scale3d(${scale}, ${scale}, 1);`;
+  }
+
+  static disableScroll(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
   }
 }
