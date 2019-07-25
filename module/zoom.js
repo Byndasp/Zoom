@@ -3,9 +3,9 @@ export default class Zoom {
       selector = '.zoom-image',
       zoomInBtn = null,
       zoomOutBtn = null,
-      zoomStep = 0.12,
-      targetScale = 1,
-      zoomMin = 0.12,
+      scaleStep = 0.12,
+      scaleTarget = 1,
+      scaleMin = 0.12,
       btnControl = false,
       wheelControl = true,
     }) {
@@ -13,9 +13,9 @@ export default class Zoom {
     this.image = this.selector.querySelector('img');
     this.zoomInBtn = typeof zoomInBtn === 'string' ? document.querySelector(zoomInBtn) : zoomInBtn;
     this.zoomOutBtn = typeof zoomOutBtn === 'string' ? document.querySelector(zoomOutBtn) : zoomOutBtn;
-    this.zoomStep = zoomStep;
-    this.targetScale = targetScale;
-    this.zoomMin = zoomMin;
+    this.scaleStep = scaleStep;
+    this.scaleTarget = scaleTarget;
+    this.scaleMin = scaleMin;
     this.imageW = this.image.clientWidth;
     this.imageH = this.image.clientHeight;
     this.selectorW = this.selector.clientWidth;
@@ -64,9 +64,9 @@ export default class Zoom {
 
   zoomInOut(condition) {
     if (condition) {
-      this.targetScale += this.zoomStep;
-    } else if (this.targetScale > this.zoomMin) {
-      this.targetScale -= this.zoomStep;
+      this.scaleTarget += this.scaleStep;
+    } else if (this.scaleTarget > this.scaleMin) {
+      this.scaleTarget -= this.scaleStep;
     }
     this.moveElementTo();
   }
@@ -146,7 +146,7 @@ export default class Zoom {
   moveElementTo(
     offsetX = this.targetOffsetX,
     offsetY = this.targetOffsetY,
-    scale = this.targetScale,
+    scale = this.scaleTarget,
   ) {
     this.image.style.cssText = `transform : 
     translate3d(${offsetX}px, ${offsetY}px, 0) 
