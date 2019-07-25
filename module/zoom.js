@@ -6,6 +6,8 @@ export default class Zoom {
       zoomStep = 0.12,
       targetScale = 1,
       zoomMin = 0.12,
+      btnControl = false,
+      wheelControl = true,
     }) {
     this.selector = typeof selector === 'string' ? document.querySelector(selector) : selector;
     this.image = this.selector.querySelector('img');
@@ -20,13 +22,16 @@ export default class Zoom {
     this.selectorH = this.selector.clientHeight;
     this.targetOffsetX = 0;
     this.targetOffsetY = 0;
+    this.btnControl = btnControl;
+    this.wheelControl = wheelControl;
 
     this.init();
   }
 
   init() {
     if (this.selector === null) return;
-    this.createBtn();
+    if (this.btnControl) this.createBtn();
+    if (this.wheelControl) this.selector.addEventListener('wheel', ev => this.handleWheel(ev));
     this.centerElement();
     this.image.addEventListener('mousedown', ev => this.handleStart(ev));
     this.image.addEventListener('touchstart', ev => this.handleStart(ev));
@@ -64,6 +69,10 @@ export default class Zoom {
       this.targetScale -= this.zoomStep;
     }
     this.moveElementTo();
+  }
+
+  handleWheel(event) {
+    this.zoomInOut(event.wheelDelta > 0);
   }
 
   handleStart(event) {
