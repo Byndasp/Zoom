@@ -3,6 +3,8 @@
     overflow: hidden;
     width: 600px;
     height: 600px;
+    margin-left: 100px;
+    margin-top: 100px;
 }
 
 .zoom-img_wrap img {
@@ -20,6 +22,19 @@
 
 .zoom-img_wrap img:active {
     cursor: grabbing;
+}
+
+.zoom-container {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 1px solid lightgrey;
+    opacity: 0;
+    transition: opacity ease-in-out .2s;
+}
+
+.zoom-container.active {
+    opacity: 1;
 }
 
 .btn-zoom-in,
